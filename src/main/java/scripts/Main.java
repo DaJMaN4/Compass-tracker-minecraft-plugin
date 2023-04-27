@@ -20,9 +20,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class Main extends JavaPlugin implements Listener {
@@ -31,7 +29,13 @@ public final class Main extends JavaPlugin implements Listener {
     public List<Player> plays = new ArrayList<Player>();
     public List<Player> plays2 = new ArrayList<Player>();
     public List<Inventory> invs = new ArrayList<Inventory>();
+    public Map<Player, Integer> invnumber = new HashMap<Player, Integer>();
+    public Inventory inv;
     public Integer k = 0;
+    public boolean ifManyInvs = false;
+    public String name;
+    public String previous;
+    public String next;
 
 
     @Override
@@ -40,12 +44,6 @@ public final class Main extends JavaPlugin implements Listener {
         this.getServer().getPluginManager().registerEvents(this, this);
         run();
 
-    }
-
-
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
     }
 
 
@@ -64,7 +62,12 @@ public final class Main extends JavaPlugin implements Listener {
             if (args.length > 1) {
                 sender.sendMessage("wrong usage of the command. Try /getcompass <nick>");
             } else {
-                getServer().getPlayer(args[0]).getInventory().addItem(item());
+                Player p =  getServer().getPlayer(args[0]);
+                if (p == null) {
+                    sender.sendMessage("This player isn't online");
+                    return true;
+                }
+                p.getInventory().addItem(item());
             }
         }
         return true;
@@ -96,11 +99,12 @@ public final class Main extends JavaPlugin implements Listener {
                 return;
             }
         }
+
     }
 
 
     @EventHandler
-    public void onClick(InventoryClickEvent event) {
+    public void oClick(InventoryClickEvent event) {
         if (!event.getView().getTitle().contains("Pointer"))
             return;
         if(event.getCurrentItem() == null)
@@ -144,7 +148,6 @@ public final class Main extends JavaPlugin implements Listener {
         player.setCompassTarget(player2.getLocation());
         plays.add(player);
         plays2.add(player2);
-        return;
         }
 
 
@@ -161,8 +164,64 @@ public final class Main extends JavaPlugin implements Listener {
     }
 
 
+    public Inventory createInv(List<Inventory> invent) {
+        Inventory inv = Bukkit.createInventory(null, 54,
+                ChatColor.DARK_PURPLE + name + (invent.size() + 1) + "/" + invent.size() + 1);
+
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(ChatColor.GOLD + previous);
+        item.setItemMeta(meta);
+        inv.setItem(45, item);
+
+        meta.setDisplayName(ChatColor.GOLD + next);
+        item.setItemMeta(meta);
+        inv.setItem(53, item);
+
+        item = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        meta = item.getItemMeta();
+        meta.setDisplayName(" ");
+        inv.setItem(52, item);
+        inv.setItem(51, item);
+        inv.setItem(50, item);
+        inv.setItem(49, item);
+        inv.setItem(48, item);
+        inv.setItem(47, item);
+        inv.setItem(46, item);
+        return inv;
+    }
+
+
     private void createInventory(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 9, "Pointer");
+        ifManyInvs = false;
+        if (getServer().getOnlinePlayers().size() > 10)  {
+            Inventory inv = Bukkit.createInventory(null, 9, "Pointer");
+        } else if (getServer().getOnlinePlayers().size() > 19) {
+            Inventory inv = Bukkit.createInventory(null, 18, "Pointer");
+        } else if (getServer().getOnlinePlayers().size() > 28) {
+            Inventory inv = Bukkit.createInventory(null, 27, "Pointer");
+        } else if (getServer().getOnlinePlayers().size() > 37) {
+            Inventory inv = Bukkit.createInventory(null, 36, "Pointer");
+        } else if (getServer().getOnlinePlayers().size() > 46) {
+            Inventory inv = Bukkit.createInventory(null, 45, "Pointer");
+        } else if (getServer().getOnlinePlayers().size() > 55) {
+            Inventory inv = Bukkit.createInventory(null, 54, "Pointer");
+        } else if (getServer().getOnlinePlayers().size() < 55) {
+            Inventory inv = createInv(invs);
+            int x = 0;
+            for (int i = 0; i <= player.getWorld().getPlayers().size() - 1; i++) {
+                x++;
+                if (x == 45) {
+                    x = 0;
+                    invs.add(inv);
+                    inv.clear();
+                }
+                ItemStack item = getPlayerHead(player.getWorld().getPlayers().get(i).getName());
+                inv.setItem(x, item);
+            }
+            ifManyInvs = true;
+        }
+
 
         for (int i = 0; i <= player.getWorld().getPlayers().size() - 1; i++) {
             ItemStack item = getPlayerHead(player.getWorld().getPlayers().get(i).getName());
@@ -188,6 +247,34 @@ public final class Main extends JavaPlugin implements Listener {
         item.setItemMeta(meta);
 
         return item;
+    }
+
+
+    @EventHandler
+    public void onClick(InventoryClickEvent event) {
+        if (ifManyInvs) {
+            for (int i = 0; i != invs.size(); i++) {
+                if (invs.contains(event.getInventory())) {
+                    if (event.getSlot() > 44) {
+                        event.setCancelled(true);
+                        Player player = (Player) event.getWhoClicked();
+                        if (event.getSlot() == 45 && invnumber.get(player) - 1 != -1) {
+                            invnumber.put(player, invnumber.get(player) - 1);
+                            event.getWhoClicked().closeInventory();
+                            event.getWhoClicked().openInventory(worldsInvs.get(i).get(invnumber.get(player)));
+
+                        } else if (event.getSlot() == 53 && invnumber.get(player) + 1 <= invs.size() - 1) {
+                            invnumber.put(player, invnumber.get(player) + 1);
+                            event.getWhoClicked().closeInventory();
+                            event.getWhoClicked().openInventory(worldsInvs.get(i).get(invnumber.get(player)));
+                        }
+                    }
+                }
+            }
+        } else if (event.getInventory() == inv) {
+
+        }
+
     }
 
 
