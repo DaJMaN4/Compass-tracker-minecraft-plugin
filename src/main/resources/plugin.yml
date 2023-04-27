@@ -1,0 +1,6 @@
+name: Kompas-pointer
+version: '${project.version}'
+main: scripts.Main
+api-version: 1.18
+commands:
+  getcompass:
