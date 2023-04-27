@@ -30,6 +30,7 @@ public final class Main extends JavaPlugin implements Listener {
     public Inventory Pointer;
     public List<Player> plays = new ArrayList<Player>();
     public List<Player> plays2 = new ArrayList<Player>();
+    public List<Inventory> invs = new ArrayList<Inventory>();
     public Integer k = 0;
 
 
@@ -52,14 +53,21 @@ public final class Main extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (label.equalsIgnoreCase("getcompass")) {
             if (!(sender instanceof Player)) {
-                System.out.println("Command not conatible with console (dont judge my spelling)");
+                System.out.println("Command not compatible with console");
                 return true;
             }
-            Player player = (Player) sender;
-            player.getInventory().addItem(item());
-            return true;
+            if (args.length == 0) {
+                Player player = (Player) sender;
+                player.getInventory().addItem(item());
+                return true;
+            }
+            if (args.length > 1) {
+                sender.sendMessage("wrong usage of the command. Try /getcompass <nick>");
+            } else {
+                getServer().getPlayer(args[0]).getInventory().addItem(item());
+            }
         }
-        return false;
+        return true;
     }
 
 
@@ -113,7 +121,7 @@ public final class Main extends JavaPlugin implements Listener {
         }
 
         if (k == -1) {
-            player.sendMessage("sorry bro, didint found that guy");
+            player.sendMessage("sorry bro, couldn't find that guy");
             return;
         }
 
@@ -131,7 +139,7 @@ public final class Main extends JavaPlugin implements Listener {
                     return;
                 }
             }
-        player.sendMessage(ChatColor.DARK_PURPLE + "" + ChatColor.UNDERLINE + "Scigasz " + player2.getDisplayName());
+        player.sendMessage(ChatColor.DARK_PURPLE + "" + ChatColor.UNDERLINE + "You are tracking " + player2.getDisplayName());
         player.closeInventory();
         player.setCompassTarget(player2.getLocation());
         plays.add(player);
@@ -143,18 +151,9 @@ public final class Main extends JavaPlugin implements Listener {
     public ItemStack item() {
         ItemStack item = new ItemStack(Material.COMPASS);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.ITALIC + "" + ChatColor.DARK_PURPLE + ChatColor.BOLD + "Legendarny mega compass");
+        meta.setDisplayName(ChatColor.ITALIC + "" + ChatColor.DARK_PURPLE + ChatColor.BOLD + "Tracker compass");
         List<String> lore = new ArrayList<String>();
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "Nazywali mnie glupcem");
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "Bylem pokazywany palcem przez" );
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "tak zwanych filozofow i poetow." );
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "Lecz sie nie poddalem, znalazlem" );
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "wszystko co kiedykolwiek szukalem" );
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "Jestem prowadzony przez kompas" );
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "Jacka Wrobla." );
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "Co prowadzi do tego czego" );
-        lore.add(ChatColor.ITALIC + "" + ChatColor.GOLD + "Najbardziej pragniesz" );
-        lore.add(ChatColor.GRAY + "Legendarnosc IV");
+        lore.add(ChatColor.GRAY + "Legendary IV");
         meta.setUnbreakable(true);
         meta.setLore(lore);
         item.setItemMeta(meta);
