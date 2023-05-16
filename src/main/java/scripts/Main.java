@@ -30,6 +30,7 @@ public final class Main extends JavaPlugin implements Listener {
     public List<Player> plays2 = new ArrayList<Player>();
     public List<Inventory> invs = new ArrayList<Inventory>();
     public Map<Player, Integer> invnumber = new HashMap<Player, Integer>();
+    public Map<Integer, List<Inventory>> worldsInvs = new HashMap<Integer, List<Inventory>>();
     public Inventory inv;
     public Integer k = 0;
     public boolean ifManyInvs = false;
@@ -40,9 +41,21 @@ public final class Main extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
+        reload_config();
+
         this.getServer().getPluginManager().registerEvents(this, this);
         run();
+
+    }
+
+
+    public void reload_config() {
+        name = ChatColor.translateAlternateColorCodes('&',
+                getConfig().getString("name"));
+        previous = ChatColor.translateAlternateColorCodes('&',
+                getConfig().getString("previous"));
+        next = ChatColor.translateAlternateColorCodes('&',
+                getConfig().getString("next"));
 
     }
 
@@ -104,50 +117,74 @@ public final class Main extends JavaPlugin implements Listener {
 
 
     @EventHandler
-    public void oClick(InventoryClickEvent event) {
-        if (!event.getView().getTitle().contains("Pointer"))
-            return;
-        if(event.getCurrentItem() == null)
-            return;
-        if(event.getCurrentItem().getItemMeta() == null)
-            return;
-        Player player = (Player) event.getWhoClicked();
-        event.setCancelled(true);
-        if (event.getClickedInventory().getType() == InventoryType.PLAYER)
-            return;
+    public void onClick(InventoryClickEvent event) {
+        if (event.getView().getTitle().equals(name)) {
+            if (event.getCurrentItem() != null) {
+                Player player = (Player) event.getWhoClicked();
+                event.setCancelled(true);
+                if (event.getClickedInventory().getType() == InventoryType.PLAYER)
+                    return;
 
-        k = -1;
-        for (int i = 0; i <= player.getWorld().getPlayers().size() - 1; i++) {
-            if (player.getWorld().getPlayers().get(i).getName().equals(event.getCurrentItem().getItemMeta().getDisplayName())) {
-                k = i;
-                break;
-            }
-        }
+                k = -1;
+                for (int i = 0; i <= player.getWorld().getPlayers().size() - 1; i++) {
+                    if (player.getWorld().getPlayers().get(i).getName().equals(event.getCurrentItem().getItemMeta().getDisplayName())) {
+                        k = i;
+                        break;
+                    }
+                }
 
-        if (k == -1) {
-            player.sendMessage("sorry bro, couldn't find that guy");
-            return;
-        }
-
-        Player player2 = player.getWorld().getPlayers().get(k);
-        for (int i = 0; i <= plays.size() - 1; i++) {
-            if (player == player2)
-                return;
-        }
-
-        if (!plays.contains(player))
-            for (int i = 0; i <= plays.size() - 1; i++) {
-                if (plays.get(i) == player) {
-                    plays.remove(i);
-                    plays2.remove(i);
+                if (k == -1) {
+                    player.sendMessage("sorry bro, couldn't find that guy");
                     return;
                 }
+
+                Player player2 = player.getWorld().getPlayers().get(k);
+                for (int i = 0; i <= plays.size() - 1; i++) {
+                    if (player == player2)
+                        return;
+                }
+
+                if (!plays.contains(player))
+                    for (int i = 0; i <= plays.size() - 1; i++) {
+                        if (plays.get(i) == player) {
+                            plays.remove(i);
+                            plays2.remove(i);
+                            return;
+                        }
+                    }
+                player.sendMessage(ChatColor.DARK_PURPLE + "" + ChatColor.UNDERLINE + "You are tracking " + player2.getDisplayName());
+                player.closeInventory();
+                player.setCompassTarget(player2.getLocation());
+                plays.add(player);
+                plays2.add(player2);
             }
-        player.sendMessage(ChatColor.DARK_PURPLE + "" + ChatColor.UNDERLINE + "You are tracking " + player2.getDisplayName());
-        player.closeInventory();
-        player.setCompassTarget(player2.getLocation());
-        plays.add(player);
-        plays2.add(player2);
+        }
+
+
+        if (ifManyInvs) {
+            for (int i = 0; i != invs.size(); i++) {
+                if (invs.contains(event.getInventory())) {
+                    if (event.getSlot() > 44) {
+                        event.setCancelled(true);
+                        Player player = (Player) event.getWhoClicked();
+                        if (event.getSlot() == 45 && invnumber.get(player) - 1 != -1) {
+                            invnumber.put(player, invnumber.get(player) - 1);
+                            event.getWhoClicked().closeInventory();
+                            event.getWhoClicked().openInventory(worldsInvs.get(i).get(invnumber.get(player)));
+
+                        } else if (event.getSlot() == 53 && invnumber.get(player) + 1 <= invs.size() - 1) {
+                            invnumber.put(player, invnumber.get(player) + 1);
+                            event.getWhoClicked().closeInventory();
+                            event.getWhoClicked().openInventory(worldsInvs.get(i).get(invnumber.get(player)));
+                        }
+                    }
+                }
+            }
+        } else if (event.getInventory() == inv) {
+
+        }
+
+
         }
 
 
@@ -247,34 +284,6 @@ public final class Main extends JavaPlugin implements Listener {
         item.setItemMeta(meta);
 
         return item;
-    }
-
-
-    @EventHandler
-    public void onClick(InventoryClickEvent event) {
-        if (ifManyInvs) {
-            for (int i = 0; i != invs.size(); i++) {
-                if (invs.contains(event.getInventory())) {
-                    if (event.getSlot() > 44) {
-                        event.setCancelled(true);
-                        Player player = (Player) event.getWhoClicked();
-                        if (event.getSlot() == 45 && invnumber.get(player) - 1 != -1) {
-                            invnumber.put(player, invnumber.get(player) - 1);
-                            event.getWhoClicked().closeInventory();
-                            event.getWhoClicked().openInventory(worldsInvs.get(i).get(invnumber.get(player)));
-
-                        } else if (event.getSlot() == 53 && invnumber.get(player) + 1 <= invs.size() - 1) {
-                            invnumber.put(player, invnumber.get(player) + 1);
-                            event.getWhoClicked().closeInventory();
-                            event.getWhoClicked().openInventory(worldsInvs.get(i).get(invnumber.get(player)));
-                        }
-                    }
-                }
-            }
-        } else if (event.getInventory() == inv) {
-
-        }
-
     }
 
 
