@@ -1,3 +1,11 @@
 name: "dawdaw" # name of the guis
 previous: "previous" # previous side
 next: "next" # next side
+
+time: 20 # number of thick between refreshing compass position
+
+itemName: "Tracker" # name of the compass
+
+message: "You are tracking " # player name
+dontFind: "sorry bro, couldn't find that guy"
+notOnline: "This player isn't online"

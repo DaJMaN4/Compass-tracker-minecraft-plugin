@@ -37,15 +37,19 @@ public final class Main extends JavaPlugin implements Listener {
     public String name;
     public String previous;
     public String next;
+    public String message;
+    public String dontFind;
+    public String notOnline;
+    public String itemName;
+    public int time;
 
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         reload_config();
-
         this.getServer().getPluginManager().registerEvents(this, this);
         run();
-
     }
 
 
@@ -56,7 +60,15 @@ public final class Main extends JavaPlugin implements Listener {
                 getConfig().getString("previous"));
         next = ChatColor.translateAlternateColorCodes('&',
                 getConfig().getString("next"));
-
+        message = ChatColor.translateAlternateColorCodes('&',
+                getConfig().getString("message"));
+        dontFind = ChatColor.translateAlternateColorCodes('&',
+                getConfig().getString("dontFind"));
+        notOnline = ChatColor.translateAlternateColorCodes('&',
+                getConfig().getString("notOnline"));
+        itemName = ChatColor.translateAlternateColorCodes('&',
+                getConfig().getString("itemName"));
+        time = getConfig().getInt("time");
     }
 
 
@@ -77,7 +89,7 @@ public final class Main extends JavaPlugin implements Listener {
             } else {
                 Player p =  getServer().getPlayer(args[0]);
                 if (p == null) {
-                    sender.sendMessage("This player isn't online");
+                    sender.sendMessage(notOnline);
                     return true;
                 }
                 p.getInventory().addItem(item());
@@ -134,7 +146,7 @@ public final class Main extends JavaPlugin implements Listener {
                 }
 
                 if (k == -1) {
-                    player.sendMessage("sorry bro, couldn't find that guy");
+                    player.sendMessage(dontFind);
                     return;
                 }
 
@@ -152,7 +164,7 @@ public final class Main extends JavaPlugin implements Listener {
                             return;
                         }
                     }
-                player.sendMessage(ChatColor.DARK_PURPLE + "" + ChatColor.UNDERLINE + "You are tracking " + player2.getDisplayName());
+                player.sendMessage(ChatColor.DARK_PURPLE + "" + ChatColor.UNDERLINE + message + player2.getDisplayName());
                 player.closeInventory();
                 player.setCompassTarget(player2.getLocation());
                 plays.add(player);
@@ -191,7 +203,7 @@ public final class Main extends JavaPlugin implements Listener {
     public ItemStack item() {
         ItemStack item = new ItemStack(Material.COMPASS);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.ITALIC + "" + ChatColor.DARK_PURPLE + ChatColor.BOLD + "Tracker compass");
+        meta.setDisplayName(ChatColor.ITALIC + "" + ChatColor.DARK_PURPLE + ChatColor.BOLD + itemName);
         List<String> lore = new ArrayList<String>();
         lore.add(ChatColor.GRAY + "Legendary IV");
         meta.setUnbreakable(true);
@@ -232,17 +244,17 @@ public final class Main extends JavaPlugin implements Listener {
     private void createInventory(Player player) {
         ifManyInvs = false;
         if (getServer().getOnlinePlayers().size() > 10)  {
-            Inventory inv = Bukkit.createInventory(null, 9, "Pointer");
+            Inventory inv = Bukkit.createInventory(null, 9, name);
         } else if (getServer().getOnlinePlayers().size() > 19) {
-            Inventory inv = Bukkit.createInventory(null, 18, "Pointer");
+            Inventory inv = Bukkit.createInventory(null, 18, name);
         } else if (getServer().getOnlinePlayers().size() > 28) {
-            Inventory inv = Bukkit.createInventory(null, 27, "Pointer");
+            Inventory inv = Bukkit.createInventory(null, 27, name);
         } else if (getServer().getOnlinePlayers().size() > 37) {
-            Inventory inv = Bukkit.createInventory(null, 36, "Pointer");
+            Inventory inv = Bukkit.createInventory(null, 36, name);
         } else if (getServer().getOnlinePlayers().size() > 46) {
-            Inventory inv = Bukkit.createInventory(null, 45, "Pointer");
+            Inventory inv = Bukkit.createInventory(null, 45, name);
         } else if (getServer().getOnlinePlayers().size() > 55) {
-            Inventory inv = Bukkit.createInventory(null, 54, "Pointer");
+            Inventory inv = Bukkit.createInventory(null, 54, name);
         } else if (getServer().getOnlinePlayers().size() < 55) {
             Inventory inv = createInv(invs);
             int x = 0;
@@ -294,6 +306,18 @@ public final class Main extends JavaPlugin implements Listener {
                     plays.get(i).setCompassTarget(plays2.get(i).getLocation());
                 }
             }
-        }.runTaskTimer(this, 0, 5);
+        }.runTaskTimer(this, 0, time);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
